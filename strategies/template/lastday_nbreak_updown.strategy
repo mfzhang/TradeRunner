@@ -1,0 +1,71 @@
+investor="{{INVESTOR}}"
+
+instrumentid="{{INSTRUMENT}}"
+
+instrument_internal_id="{{ITEM}}"
+breaknum={{0}}
+
+key_open_items_manifest=instrument_internal_id.."_"..breaknum.."_lastday_open_items_manifest"
+open_numbers={{1}}
+main=function(finished,o,h,l,c,td)
+	contentChanged=false
+	buynum=0
+	sellnum=0  
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		return -1,-1
+	end
+	local json = require('json')
+	
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+		manifest['buy']=0
+		manifest['sell']=0
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	else
+		--print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	--保存的数量
+	buynum=manifest['buy']
+	sellnum=manifest['sell']
+
+	
+	oi,hi,li,ci=get_data_of_days_before(instrument_internal_id,1);
+	if(c>hi+breaknum)
+	then
+		--如果多没开或者开空了
+		if(buynum<=0 or sellnum>0)
+		then
+			contentChanged = true
+			buynum = open_numbers
+			sellnum = 0
+		end
+	elseif(c<li-breaknum)
+	then
+		--如果空没开或者开多了
+		if(buynum>0 or sellnum<=0)
+		then
+			contentChanged = true
+			sellnum = open_numbers
+			buynum = 0
+		end
+	end
+	
+	--无路如何存入json
+	manifest['buy'] = buynum
+	manifest['sell'] = sellnum
+
+	if(contentChanged)
+	then
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	
+	return buynum,sellnum
+end

@@ -1,0 +1,219 @@
+investor="{{INVESTOR}}"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="{{INSTRUMENT}}"
+--这个值是内部代码
+instrument_internal_id="{{ITEM}}"
+
+
+key_open_items_manifest=instrument_internal_id.."_ma_open_items_manifest"
+--開倉數量,1
+open_numbers={{0}}
+
+--突破某天均线加上这个值，就认为突破，--10
+value_break={{1}}
+
+validMaNumbers={2,3}
+
+main=function(finished,o,h,l,c,td)
+	
+	maValueTable={}
+	td_now = os.date("*t")
+	
+	end_of_day=false
+	if(td_now.hour==14 and td_now.min==59 and td_now.sec>50 or td_now.hour==15)
+	then
+		end_of_day=true
+	end
+	
+	contentChanged=false
+	
+	local json = require('json')
+	
+	--得到当前的总数
+	buynum=0
+	sellnum=0  
+	-- 读取历史记录
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		for idx,value in ipairs(manifest) do
+			buynum = buynum + value['buy']
+			sellnum = sellnum + value['sell']
+		end
+		return buynum,sellnum
+	end
+
+	
+
+	
+	
+	today_find=false
+
+	total=get_histories_count(instrument_internal_id,24*60);
+	
+	for idx,value in ipairs(validMaNumbers) do
+		find1=false
+		find2=false
+		for maniIdx,maniValue in ipairs(manifest) do
+			if(find1 and find2) 
+			then
+				--如果两个都找到，退出循环
+				break
+			end
+			
+			if(maniValue['MANumber'] == value)
+			then
+				--找到當前的，比如说20天均线的历史数据
+				--均线统计天数
+				maNumber=maniValue['MANumber']
+				--翻转类型
+				reverse_type=maniValue['reverse_type']
+				if(reverse_type==1)
+				then
+					find1 = true
+				elseif(reverse_type==2)
+				then
+					find2 = true
+				end
+				--保存的数量
+				l_buy=maniValue['buy']
+				l_sell=maniValue['sell']
+
+				--这个暂时不用
+				this_day=maniValue['day']
+
+				--昨天日k的均线
+				last_day_ma_value = get_histories_ma_value(instrument_internal_id,24*60,maNumber,total-1);
+				oi,hi,li,ci=get_data_of_days_before(instrument_internal_id,1);--最后一天的值
+				if(end_of_day)
+				then
+					--if(maValueTable[maNumber]<0)
+					--then
+						oni,hni,lni,cni=get_data_of_days_before(instrument_internal_id,maNumber);--得到n天前的值
+						maValue=(maNumber*last_day_ma_value-cni+c)/maNumber
+						maValueTable[maNumber]=maValue
+					--end
+					if(c>maValueTable[maNumber] and (l_buy<=0 or l_sell>0))
+					then
+						l_buy=open_numbers
+						l_sell=0
+						contentChanged =true
+					end
+
+					if(c<maValueTable[maNumber] and (l_sell<=0 or l_buy>0))
+					then
+						l_sell=open_numbers
+						l_buy=0
+						contentChanged =true
+					end			
+
+				else
+					if(reverse_type==1) --每天只翻转一次
+					then
+						if(ci> last_day_ma_value) --昨天是多
+						then
+							if(l<last_day_ma_value-value_break and (l_sell<=0 or l_buy>0))
+							then
+								l_sell = open_numbers
+								l_buy=0
+								contentChanged = true
+							end
+						elseif(ci< last_day_ma_value) --昨天是空
+						then	
+							if(h>last_day_ma_value+value_break and (l_buy<=0 or l_sell >0))
+							then
+								l_buy = open_numbers
+								l_sell=0
+								contentChanged = true
+							end
+						else--中间
+						end
+					elseif(reverse_type==2) --根据值翻转
+					then
+						if(c> last_day_ma_value+ value_break) --上面
+						then
+							if(l_buy<=0)
+							then
+								l_buy = open_numbers
+								l_sell=0
+								contentChanged = true
+							end
+						elseif(c< last_day_ma_value- value_break) --下面
+						then	
+							if(l_sell<=0 )
+							then
+								l_sell = open_numbers
+								l_buy=0
+								contentChanged = true
+							end
+						else--中间
+							--不变	
+						end	
+					end
+				end
+
+				buynum = buynum + l_buy
+				sellnum = sellnum + l_sell
+				
+				--不管是否变化，都重新赋值
+				maniValue['buy']=l_buy
+				maniValue['sell']=l_sell
+			end
+		end
+		
+		--第一次运行，可以只写进入，等第二次运行的时候运行策略
+		if( not find1)
+		then
+			contentChanged = true
+			item={}
+			item['MANumber']=value
+			item['reverse_type']=1
+				
+			--保存的数量
+			item['buy']=0
+			item['sell']=0
+
+			--这个暂时不用
+			item['day']=''
+			table.insert(manifest,item)
+		
+		end
+		
+		if(not find2)
+		then
+			contentChanged = true
+			item={}
+			item['MANumber']=value
+			item['reverse_type']=2
+				
+			--保存的数量
+			item['buy']=0
+			item['sell']=0
+
+			--这个暂时不用
+			item['day']=''
+			table.insert(manifest,item)
+		end
+	end
+
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end 
+	
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

@@ -1,0 +1,1 @@
+schtasks  /create /TN update_ctp_ins /TR "node c:\wodequant\nodeserver\config\update_instruments_collection.js" /SC WEEKLY /D SAT /ST 00:30:00 /F

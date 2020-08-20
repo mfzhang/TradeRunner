@@ -1,0 +1,1 @@
+schtasks  /create /TN localdaemon_watchdog /TR "node c:\wodequant\nodeserver\localdaemon\config\localdaemon_monitor.js" /SC MINUTE /MO 2 /F

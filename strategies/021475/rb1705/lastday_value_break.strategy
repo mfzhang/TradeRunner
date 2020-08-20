@@ -1,0 +1,149 @@
+investor="021475"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="rb1710"
+--这个值是内部代码
+instrument_internal_id="RB1710"
+max_days=20
+breaknum=80
+key_open_items_manifest=instrument_internal_id.."_lastday_break_items_manifest"
+open_numbers=1
+--[[
+get_trade_date_distance=function(tt,dd)
+	return 10
+end
+get_data_of_days_before=function(instrumentid,i)
+	return 10,20,30,40
+end
+get_script_value=function(tt,dd)
+	return '[ { "buy" : 0, "day" : "20170123","sell" : 0, "zhiyinged" : false},{"buy" : 0, "day" : "20170124",    "sell" : 5,"zhiyinged" : false}]'
+end
+save_script_value=function(ttd,dd,ddd)
+
+end]]--
+main=function(finished,o,h,l,c,td)
+	
+	td_now = os.date("*t")
+	end_of_day=false
+	if(td_now.hour==15 and td_now.minute==59 and td_now.second>50)
+	then
+		end_of_day=true
+	end
+	print("open = ", o)
+	print("high = ", h)
+	print("low = ", l)
+	print("close = ", c)
+	print ("trade date", td)
+	print ("max_days", max_days)
+	print("breaknum",breaknum)
+	
+	contentChanged=false
+	buynum=0
+	sellnum=0  
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		return buynum,sellnum
+	end
+	local json = require('json')
+	
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+	
+	today_find=false
+	for idx,value in ipairs(manifest) do
+		this_day=value['day']
+		-- 今天的
+		if(this_day==td) 
+		then
+			print("this is today")
+			today_find=true
+			if(c-o>breaknum and manifest[idx]['buy']<=0)--多单
+			then
+				if(manifest[idx]['sell']>0) --如果开了空单，根据空单数量开,反手
+				then
+					manifest[idx]['buy']= manifest[idx]['sell']
+					manifest[idx]['sell']=0
+				else --否则第一次开单
+					manifest[idx]['buy']= open_numbers
+				end
+				contentChanged=true
+			elseif(o-c>breaknum and manifest[idx]['sell']<=0)--空单
+			then
+				if(manifest[idx]['buy']>0) --如果开了多单，根据多单数量开,反手
+				then
+					manifest[idx]['sell']= manifest[idx]['buy']
+					manifest[idx]['buy']=0
+				else --否则第一次开单
+					manifest[idx]['sell']= open_numbers
+				end
+				contentChanged=true
+			end
+			
+			sellnum = sellnum + manifest[idx]['sell']
+			buynum = buynum + manifest[idx]['buy']
+		else
+			print (idx,this_day)
+			-- 返回小于0，表示没找到
+			day_instance=get_trade_date_distance(value['day'],instrument_internal_id)
+			-- 返回小于0，表示没找到
+			oi,hi,li,ci=get_data_of_days_before(instrument_internal_id,day_instance);
+			print(idx,"  oi = ",oi)
+			
+			-- 如果是很久的单子或者是马上就收盘
+			if(day_instance > max_days or (end_of_day and day_instance==max_days) 
+			or oi<0 or hi<0 or li<0 or ci<0)
+			then
+				manifest[idx]['sell']=0
+				manifest[idx]['buy']=0
+				contentChanged=true
+			else--不关闭
+				if(c-oi>breaknum and manifest[idx]['buy']<=0)--多单
+				then
+					if(manifest[idx]['sell']>0) --如果开了空单，根据空单数量开,反手
+					then
+						manifest[idx]['buy']= manifest[idx]['sell']
+						manifest[idx]['sell']=0
+					else --否则第一次开单
+						manifest[idx]['buy']= open_numbers
+					end
+					contentChanged=true
+				elseif(oi-c>breaknum and manifest[idx]['sell']<=0)--空单
+				then
+					if(manifest[idx]['buy']>0) --如果开了多单，根据多单数量开,反手
+					then
+						manifest[idx]['sell']= manifest[idx]['buy']
+						manifest[idx]['buy']=0
+					else --否则第一次开单
+						manifest[idx]['sell']= open_numbers
+					end
+					contentChanged=true
+				end
+			end
+			
+			sellnum = sellnum + manifest[idx]['sell']
+			buynum = buynum + manifest[idx]['buy']
+		end
+	end
+	
+	if(not today_find)
+	then
+		table.insert(manifest,{["buy"] = 0, ["day"] = td,["sell"] = 0, ["zhiyinged"] = false})
+		contentChanged=true
+	end
+	
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

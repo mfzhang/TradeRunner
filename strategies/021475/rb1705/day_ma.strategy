@@ -1,0 +1,163 @@
+investor="021475"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="rb1801"
+--这个值是内部代码
+instrument_internal_id="RB1801"
+
+
+key_open_items_manifest=instrument_internal_id.."_ma_open_items_manifest"
+open_numbers=1
+
+--突破某天均线加上这个值，就认为突破
+value_break=10
+main=function(finished,o,h,l,c,td)
+	
+	maValueTable={}
+	td_now = os.date("*t")
+	end_of_day=false
+	if(td_now.hour==15 and td_now.minute==59 and td_now.second>50)
+	then
+		end_of_day=true
+	end
+	print("open = ", o)
+	print("high = ", h)
+	print("low = ", l)
+	print("close = ", c)
+	print ("trade date", td)
+	print ("max_days", max_days)
+	print("breaknum",breaknum)
+	
+	contentChanged=false
+	local json = require('json')
+	
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		return -1,-1
+	end
+
+	-- 读取历史记录
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	--得到当前的总数
+	buynum=0
+	sellnum=0  
+	--for idx,value in ipairs(manifest) do
+	--	buynum +=value['buy']
+	--	sellnum += value['sell']
+	--end
+	
+	today_find=false
+
+	total=get_histories_count();
+	for idx,value in ipairs(manifest) do
+		--均线统计天数
+		maNumber=value['MANumber']
+		--翻转类型
+		reverse_type=value['reverse_type']
+
+		--保存的数量
+		l_buy==value['buy']
+		l_sell==value['sell']
+
+		--这个暂时不用
+		this_day=value['day']
+
+		--昨天日k的均线
+		last_day_ma_value = get_histories_ma_value(instrument_internal_id,24*60,maNumber,total-1);
+		oi,hi,li,ci=get_data_of_days_before(instrument_internal_id,1);--最后一天的值
+		if(end_of_day)
+		then
+			if(maValueTable[maNumber]<0)
+			then
+				oni,hni,lni,cni=get_data_of_days_before(instrument_internal_id,maNumber);--得到n天前的值
+				maValue=(maNumber*last_day_ma_value-cni+c)/maNumber
+				maValueTable[maNumber]=maValue
+			end
+			if(c>maValueTable[maNumber] and l_buy<=0)
+			then
+				l_buy=open_numbers
+				l_sell=0
+				contentChanged =true
+			end
+
+			if(c<maValueTable[maNumber] and l_sell<=0)
+			then
+				l_sell=open_numbers
+				l_buy=0
+				contentChanged =true
+			end			
+
+		else
+			if(reverse_type==1) --每天只翻转一次
+			then
+				if(ci> last_day_ma_value) --昨天是多
+				then
+					if(l<last_day_ma_value-value_break and l_sell<=0)
+					then
+						l_sell = open_numbers
+						l_buy=0
+						contentChanged = true
+					end
+				else if(ci< last_day_ma_value) --昨天是空
+				then	
+					if(h>last_day_ma_value+value_break and l_buy<=0)
+					then
+						l_buy = open_numbers
+						l_sell=0
+						contentChanged = true
+					end
+				else--中间
+				then	
+				end
+			else if(reverse_type==2) --根据值翻转
+			then
+				if(c> last_day_ma_value+ value_break) --上面
+				then
+					if(l_buy<=0 )
+					then
+						l_buy = open_numbers
+						l_sell=0
+						contentChanged = true
+					end
+				else if(c< last_day_ma_value- value_break) --下面
+				then	
+					if(l_sell<=0 )
+					then
+						l_sell = open_numbers
+						l_buy=0
+						contentChanged = true
+					end
+				else--中间
+					--不变
+				then	
+				end	
+			end
+		end
+
+		buynum = buynum + l_buy
+		sellnum = sellnum + l_sell
+		if(contentChanged)
+		then
+			value['buy']=l_buy
+			value['sell']=l_slee
+		end
+	end
+	
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

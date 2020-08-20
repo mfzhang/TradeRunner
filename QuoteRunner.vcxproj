@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ctp_account_mutex.cpp" />
+    <ClCompile Include="ctp_message_def.cpp" />
+    <ClCompile Include="ctp_redis_worker.cpp" />
+    <ClCompile Include="ctp_simple_command_parser.cpp" />
+    <ClCompile Include="HistoryItem.cpp" />
+    <ClCompile Include="HistoryItemDBWriter.cpp" />
+    <ClCompile Include="HistoryMysqlDb.cpp" />
+    <ClCompile Include="InstrumentJsonHelper.cpp" />
+    <ClCompile Include="InstrumentRuntime.cpp" />
+    <ClCompile Include="KLineGenerator.cpp" />
+    <ClCompile Include="kline_redis_worker.cpp" />
+    <ClCompile Include="my_utils.cpp" />
+    <ClCompile Include="Quote.cpp" />
+    <ClCompile Include="QuoteMain.cpp" />
+    <ClCompile Include="QuoteRunnerArgus.cpp" />
+    <ClCompile Include="redisclient\impl\redisasyncclient.cpp" />
+    <ClCompile Include="redisclient\impl\redisclientimpl.cpp" />
+    <ClCompile Include="redisclient\impl\redisparser.cpp" />
+    <ClCompile Include="redisclient\impl\redissyncclient.cpp" />
+    <ClCompile Include="redisclient\impl\redisvalue.cpp" />
+    <ClCompile Include="session_manager.cpp" />
+    <ClCompile Include="socket_server.cpp" />
+    <ClCompile Include="socket_session.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TLVPackage.cpp" />
+    <ClCompile Include="TradeContext.cpp" />
+    <ClCompile Include="TradeRunnerArgus.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ctpapi64\ThostFtdcMdApi.h" />
+    <ClInclude Include="ctpapi64\ThostFtdcTraderApi.h" />
+    <ClInclude Include="ctpapi64\ThostFtdcUserApiDataType.h" />
+    <ClInclude Include="ctpapi64\ThostFtdcUserApiStruct.h" />
+    <ClInclude Include="ctp_account_mutex.h" />
+    <ClInclude Include="ctp_command_types.h" />
+    <ClInclude Include="ctp_message_def.h" />
+    <ClInclude Include="ctp_redis_worker.h" />
+    <ClInclude Include="ctp_simple_command_parser.h" />
+    <ClInclude Include="easylogging++.h" />
+    <ClInclude Include="HistoryItem.h" />
+    <ClInclude Include="HistoryItemDBWriter.h" />
+    <ClInclude Include="HistoryMysqlDb.h" />
+    <ClInclude Include="InstrumentJsonHelper.h" />
+    <ClInclude Include="InstrumentRuntime.h" />
+    <ClInclude Include="KLineGenerator.h" />
+    <ClInclude Include="kline_redis_worker.h" />
+    <ClInclude Include="my_utils.h" />
+    <ClInclude Include="quote.h" />
+    <ClInclude Include="QuoteRunnerArgus.h" />
+    <ClInclude Include="redisclient\config.h" />
+    <ClInclude Include="redisclient\impl\redisclientimpl.h" />
+    <ClInclude Include="redisclient\redisasyncclient.h" />
+    <ClInclude Include="redisclient\redisbuffer.h" />
+    <ClInclude Include="redisclient\redisclient.h" />
+    <ClInclude Include="redisclient\redisparser.h" />
+    <ClInclude Include="redisclient\redissyncclient.h" />
+    <ClInclude Include="redisclient\redisvalue.h" />
+    <ClInclude Include="redisclient\version.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="session_manager.h" />
+    <ClInclude Include="socket_server.h" />
+    <ClInclude Include="socket_session.h" />
+    <ClInclude Include="SqliteHelper.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="TLVPackage.h" />
+    <ClInclude Include="TradeContext.h" />
+    <ClInclude Include="TradeRunnerArgus.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\MyCTP2.ico" />
+    <Image Include="res\MyCTP2Doc.ico" />
+    <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\Toolbar256.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ctpapi64\error.dtd" />
+    <None Include="ctpapi64\thostmduserapi.dll" />
+    <None Include="ctpapi64\thosttraderapi.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="ctpapi64\error.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="ctpapi64\thostmduserapi.lib" />
+    <Library Include="ctpapi64\thosttraderapi.lib" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C0FFFB06-C75D-469E-89F7-3EF5EEECBBC3}</ProjectGuid>
+    <RootNamespace>QuoteRunner</RootNamespace>
+    <ProjectName>QuoteRunner</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <IntDir>$(SolutionDir)\$(ProjectName)\bin\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <IntDir>$(SolutionDir)\$(ProjectName)\bin\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\api;.\redisclient;..\boost_1_57_0;%(AdditionalIncludeDirectories);.\include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;BOOST_DATE_TIME_NO_LIB;BOOST_REGEX_NO_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>.\api;..\boost_1_57_0\stage\lib;%(AdditionalLibraryDirectories);.\lib\jsoncpp\</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>libboost_date_time-vc140-mt-sgd-1_57.lib;json_vc71_libmtd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)script\post_build.bat $(SolutionDir)$(Configuration)\</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\ctpapi64;.\redisclient;..\boost_1_57_0;%(AdditionalIncludeDirectories);.\include\;.\lib\mysql-connector-c++-8.0.11-windows-x86-64bit\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;BOOST_DATE_TIME_NO_LIB;BOOST_REGEX_NO_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>.\ctpapi64;..\boost_1_57_0\stage\lib\x64;%(AdditionalLibraryDirectories);.\lib\jsoncpp\x64\;.\lib\mysql-connector-c++-8.0.11-windows-x86-64bit\lib64\vs14</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>mysqlcppconn.lib;mysqlcppconn8.lib;libboost_date_time-vc140-mt-sgd-1_57.lib;json_vc71_libmtd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)script\post_build.bat $(SolutionDir)$(Configuration)\</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\api;.\redisclient;..\boost_1_57_0;%(AdditionalIncludeDirectories);.\include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;BOOST_DATE_TIME_NO_LIB;BOOST_REGEX_NO_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>.\api;..\boost_1_57_0\stage\lib;%(AdditionalLibraryDirectories);.\lib\jsoncpp\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libboost_date_time-vc140-mt-s-1_57.lib;json_vc71_libmt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)script\post_build.bat $(SolutionDir)$(Configuration)\</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\ctpapi64;.\redisclient;..\boost_1_57_0;%(AdditionalIncludeDirectories);.\include\;.\lib\mysql-connector-c++-8.0.11-windows-x86-64bit\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;BOOST_DATE_TIME_NO_LIB;BOOST_REGEX_NO_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <DebugInformationFormat>None</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>.\ctpapi64;..\boost_1_57_0\stage\lib\x64;%(AdditionalLibraryDirectories);.\lib\jsoncpp\x64\;.\lib\mysql-connector-c++-8.0.11-windows-x86-64bit\lib64\vs14</AdditionalLibraryDirectories>
+      <AdditionalDependencies>mysqlcppconn.lib;mysqlcppconn8.lib;libboost_date_time-vc140-mt-s-1_57.lib;json_vc71_libmt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)script\post_build.bat $(SolutionDir)$(Platform)\$(Configuration)\</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

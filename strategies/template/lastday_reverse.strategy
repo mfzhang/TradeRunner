@@ -1,0 +1,44 @@
+investor="{{INVESTOR}}"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="{{INSTRUMENT}}"
+--这个值是内部代码
+instrument_internal_id="{{ITEM}}"
+
+--開倉數量,1
+open_numbers={{0}}
+
+--得到当前的总数
+buynum=0
+sellnum=0  
+
+function main(finished,o,h,l,c,td)
+	maValueTable={}
+	td_now = os.date("*t")
+	end_of_day=false
+	if(td_now.hour==14 and td_now.min==59 and td_now.sec>50 or td_now.hour==15)
+	then
+		--结束后，直接返回00
+		return buynum,sellnum
+	end
+
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		return buynum,sellnum
+	end
+	--得到最后一天的值
+	oi,hi,li,ci=get_data_of_days_before(instrument_internal_id,1);
+
+	if(ci<oi)
+	then
+		buynum=open_numbers
+	elseif (ci>oi)
+	then
+		sellnum=open_numbers
+	else
+		--最后一种情况懒的开单了
+	end
+
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

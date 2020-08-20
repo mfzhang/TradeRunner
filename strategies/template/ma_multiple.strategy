@@ -1,0 +1,149 @@
+investor="{{INVESTOR}}"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="{{INSTRUMENT}}"
+--这个值是内部代码
+instrument_internal_id="{{ITEM}}"
+
+
+key_open_items_manifest=instrument_internal_id.."_ma_multiple_open_items_manifest"
+--開倉數量,1
+open_numbers={{0}}
+
+validMaNumbers={20,30}
+MaNumberStr="20,30"
+
+function main(finished,o,h,l,c,td)
+	
+	maValueTable={}
+	td_now = os.date("*t")
+	end_of_day=false
+	if(td_now.hour==14 and td_now.min==59 and td_now.sec>50 or td_now.hour==15)
+	then
+		end_of_day=true
+	end
+	--得到当前的总数
+	buynum=0
+	sellnum=0  
+	
+	contentChanged=false
+	local json = require('json')
+	
+	-- 读取历史记录
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	
+
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		for idx,value in ipairs(manifest) do
+			buynum = buynum + value['buy']
+			sellnum = sellnum + value['sell']
+		end
+		return buynum,sellnum
+	end
+
+	total=get_histories_count(instrument_internal_id,24*60)
+	
+	find=false
+
+	for maniIdx,maniValue in ipairs(manifest) do
+		if(maniValue['MANumberStr'] == MaNumberStr)
+		then
+			find = true
+			--翻转类型
+			--保存的数量
+			l_buy=maniValue['buy']
+			l_sell=maniValue['sell']
+
+			if(end_of_day)
+			then
+				--计算当天的所有需要的ma value
+				maValues={}--判断
+				findUp = false
+				findDown = false
+				for idx,value in ipairs(validMaNumbers) do
+					last_day_ma_value = get_histories_ma_value(instrument_internal_id,24*60,value,total-1)
+					oni,hni,lni,cni=get_data_of_days_before(instrument_internal_id,value);--得到n天前的值
+					currMaValue = (value * last_day_ma_value -cni+ c)/value;
+					table.insert(maValues,currMaValue)
+				end
+
+				
+				for idx,value in ipairs(maValues) do
+					if(value>c) 
+					then
+						findDown = true
+					end
+					if(value<c) 
+					then 
+						findUp = true
+					end
+				end
+
+				if(findUp and findDown)
+				then
+					--不变
+				elseif (findUp)
+				then
+					if(l_sell>0 or l_buy <0) 
+					then
+						l_buy = open_numbers
+						l_sell = 0
+						contentChanged = true
+					end
+				else
+					if(l_sell<0 or l_buy >0) 
+					then
+						l_sell = open_numbers
+						l_buy = 0
+						contentChanged = true
+					end
+				end
+			else
+				--中间不变
+			end
+
+			buynum = buynum + l_buy
+			sellnum = sellnum + l_sell
+
+			--不管是否变化，都重新赋值
+			maniValue['buy']=l_buy
+			maniValue['sell']=l_sell
+
+			--只用第一个
+			break
+		end
+	end
+	
+	--第一次运行，可以只写进入，等第二次运行的时候运行策略
+	if(not find)
+	then
+		contentChanged=true
+		item={}
+		item['MANumberStr']=MaNumberStr
+		--保存的数量
+		item['buy']=0
+		item['sell']=0
+
+		table.insert(manifest,item)
+	end
+	
+
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

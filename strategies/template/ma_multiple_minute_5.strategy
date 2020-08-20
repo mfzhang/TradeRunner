@@ -1,0 +1,160 @@
+investor="{{INVESTOR}}"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="{{INSTRUMENT}}"
+--这个值是内部代码
+instrument_internal_id="{{ITEM}}"
+
+
+key_open_items_manifest=instrument_internal_id.."_ma_multiple_5minutes_open_items_manifest"
+--開倉數量,1
+open_numbers={{0}}
+
+validMaNumbers={120,500}
+MaNumberStr="120,500"
+
+maIdxValue=5
+
+maxInterval=25
+function main(finished,o,h,l,c,td)
+	
+	maValueTable={}
+	td_now = os.date("*t")
+	end_of_day=false
+	
+	--得到当前的总数
+	buynum=0
+	sellnum=0  
+	
+	contentChanged=false
+	local json = require('json')
+	
+	-- 读取历史记录
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	
+
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		for idx,value in ipairs(manifest) do
+			buynum = buynum + value['buy']
+			sellnum = sellnum + value['sell']
+		end
+		return buynum,sellnum
+	end
+
+	total=get_histories_count(instrument_internal_id,maIdxValue)
+	
+	find=false
+	
+	--最后一个周期值
+	oi,hi,li,ci=get_data_of_index(instrument_internal_id,maIdxValue,total-1)
+	
+	minMaValue=10000000
+	maxMaValue=0
+	
+	for idx,value in ipairs(validMaNumbers) do
+	
+		last_day_ma_value = get_histories_ma_value(instrument_internal_id,maIdxValue,value,total-1)
+		if (last_day_ma_value<minMaValue)
+		then
+			minMaValue = last_day_ma_value
+		end
+		
+		if (last_day_ma_value>maxMaValue )
+		then
+			maxMaValue = last_day_ma_value
+		end
+		
+	end
+
+	if ( maxMaValue - minMaValue < maxInterval )
+	then
+		temp = (maxInterval-(maxMaValue-minMaValue))/2
+		print('temp=',temp)
+		maxMaValue = maxMaValue + temp
+		minMaValue = minMaValue - temp
+	end
+	
+	
+	print ("last cycle max ma value:",  maxMaValue)
+	print ("last cycle min ma value:",  minMaValue)
+			
+	for maniIdx,maniValue in ipairs(manifest) do
+		if(maniValue['MANumberStr'] == MaNumberStr)
+		then
+			find = true
+			--翻转类型
+			--保存的数量
+			l_buy=maniValue['buy']
+			l_sell=maniValue['sell']
+
+			--两条均线下方
+			if (ci< minMaValue)
+			then
+				--当前是多单，平多开空，这么写的话，第一次需要手动开单
+				if(l_buy>0)
+				then
+					l_sell = open_numbers
+					l_buy = 0
+					contentChanged=true
+				end
+			end
+			
+			--两条均线上方
+			if(ci > maxMaValue)
+			then
+				--当前是空单，平空开多，这么写的话，第一次需要手动开单
+				if(l_sell>0)
+				then
+					l_sell = 0
+					l_buy = open_numbers
+					contentChanged=true
+				end
+			end
+			
+			
+			
+			--不管是否变化，都重新赋值
+			maniValue['buy']=l_buy
+			maniValue['sell']=l_sell
+			
+			buynum = buynum + l_buy
+			sellnum = sellnum + l_sell
+			
+			--只用第一个
+			break
+		end
+	end
+	
+	--第一次运行，可以只写进入，等第二次运行的时候运行策略
+	if(not find)
+	then
+		contentChanged=true
+		item={}
+		item['MANumberStr']=MaNumberStr
+		--保存的数量
+		item['buy']=0
+		item['sell']=0
+
+		table.insert(manifest,item)
+	end
+	
+
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

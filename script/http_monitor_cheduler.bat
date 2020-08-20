@@ -1,0 +1,1 @@
+schtasks  /create /TN http_db_watchdog /TR "node c:\wodequant\nodeserver\config\https_monitor.js" /SC MINUTE /MO 2 /F

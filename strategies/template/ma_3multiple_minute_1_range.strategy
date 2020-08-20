@@ -1,0 +1,282 @@
+investor="{{INVESTOR}}"
+--这个值是ctp的代码,这个值暂时用不上的
+instrumentid="{{INSTRUMENT}}"
+--这个值是内部代码
+instrument_internal_id="{{ITEM}}"
+
+
+key_open_items_manifest=instrument_internal_id.."_ma_multiple_1minutes_open_items_manifest"
+
+--開倉數量,这个值表示所有总的开仓，比如说4的话表示没根线开1个，7的话应该是 1 2 2 2，大数优先
+open_numbers={{0}}
+
+--翻转加仓距离，距离反转点的点数
+reverse_points={{1}}
+
+--加仓次数,这个包含首次开仓的，也就是说如果当前值是4，那么最多开4次，加仓3次
+increase_times={{2}}
+
+maxInterval={{3}}
+
+validMaNumbers={100,600,1000}
+MaNumberStr="100,600,1000,"..maxInterval
+MaNumberStrPrefix="100,600,1000,"
+
+
+validmaxIntervals={100,101,102,103}
+
+line_count = table.getn(validmaxIntervals)
+indiv_number={}
+
+aver= math.ceil(open_numbers/line_count)-1
+for i=1, line_count do indiv_number[validmaxIntervals[i]]=aver end	
+reserved=open_numbers-aver * line_count
+
+for i=line_count-reserved+1, line_count  do indiv_number[validmaxIntervals[i]]=indiv_number[validmaxIntervals[i]]+1 end
+
+for i=1, line_count do print(indiv_number[validmaxIntervals[i]]) end	
+
+klineStatLength=1
+
+minIdx=100
+maxIdx=1000
+
+zhisun_buffer=6
+
+function main(finished,o,h,l,c,td)
+	
+	maValueTable={}
+	td_now = os.date("*t")
+	end_of_day=false
+	
+	--得到当前的总数
+	buynum=0
+	sellnum=0  
+	
+	contentChanged=false
+	local json = require('json')
+	
+	-- 读取历史记录
+	manifest={}
+	
+	pvalue=get_script_value(investor,key_open_items_manifest)
+	if(pvalue == nil or pvalue=="")
+	then
+		print(key_open_items_manifest," value null")
+	else
+		print (pvalue)
+		manifest=json.decode(pvalue)
+	end
+
+	
+
+	--值不对直接返回
+	if(o<=0 or h<=0 or l<=0 or c<=0)
+	then
+		for idx,value in ipairs(manifest) do
+			buynum = buynum + value['buy']
+			sellnum = sellnum + value['sell']
+		end
+		return buynum,sellnum
+	end
+
+	totalHistoryCount=get_histories_count(instrument_internal_id,klineStatLength)
+	
+	find=false
+	
+	--最后一个周期值
+	openlast,highlast,lowlast,closelast=get_data_of_index(instrument_internal_id,klineStatLength,totalHistoryCount-1)
+	
+	minMaValue=10000000
+	maxMaValue=0
+	
+	--最大最小均线对应ma value
+	minIdxMaValue=0
+	maxIdxMaValue=0
+	for idx,value in ipairs(validMaNumbers) do
+	
+		last_day_ma_value = get_histories_ma_value(instrument_internal_id,klineStatLength,value,totalHistoryCount-2)
+		if (last_day_ma_value<minMaValue)
+		then
+			minMaValue = last_day_ma_value
+		end
+		
+		if (last_day_ma_value>maxMaValue )
+		then
+			maxMaValue = last_day_ma_value
+		end
+		
+		if(value == minIdx)
+		then
+			minIdxMaValue=last_day_ma_value
+		elseif(value==maxIdx)
+		then
+			maxIdxMaValue=last_day_ma_value
+		end
+	end
+
+	
+	
+	
+	print ("last cycle max ma value:",  maxMaValue)
+	print ("last cycle min ma value:",  minMaValue)
+	
+	maxMaValueBak = maxMaValue
+	minMaValueBak = minMaValue
+
+	for idx,maxInterval in ipairs(validmaxIntervals) do
+		
+		--重新赋值
+		open_numbers = indiv_number[maxInterval]
+
+		if ( maxMaValueBak - minMaValueBak < maxInterval )
+		then
+			temp = (maxInterval-(maxMaValueBak-minMaValueBak))/2
+			maxMaValue = maxMaValueBak + temp
+			minMaValue = minMaValueBak - temp
+		end
+
+		localMaNumberStr=MaNumberStrPrefix..maxInterval
+		find = false
+		for maniIdx,maniValue in ipairs(manifest) do
+			if(maniValue['MANumberStr'] == localMaNumberStr)
+			then
+				find = true
+				--翻转类型
+				--保存的数量
+				l_buy=maniValue['buy']
+				l_sell=maniValue['sell']
+				l_openpoints=maniValue['openpoints']
+				
+				print ("current open points:",  l_openpoints)
+
+				if(l_openpoints<0)--不存在，
+				then
+					l_openpoints=0
+					contentChanged=true
+				end
+
+				if(l_buy > 0) --必须得先判断当前是什么单,这样的问题就是第一单需要手动开，以后再写吧，还有同时有多和空的情况，也手动处理
+				then
+					--如果加了，并且翻转100，zhisun,这个条件不处理了，放在5分钟策略
+					--if(l_buy >= open_numbers * increase_times and closelast < l_openpoints -100)
+					--then
+					--	l_buy = 0
+					--	l_sell = 0
+					--	contentChanged = true
+					----两条均线下方, +1个点，避免误差
+					--else
+					if (closelast + zhisun_buffer< minMaValue)
+					then
+						l_sell=0
+						--当前是多单，平多开空，只有当均线空头排列，否则空仓
+						if(minIdxMaValue< maxIdxMaValue)
+						then
+							l_sell = open_numbers
+						end
+						l_buy = 0
+						maniValue['openpoints']=closelast
+						contentChanged=true
+						
+					elseif( closelast + 1 < minMaValue + reverse_points and closelast>l_openpoints) --在minValue 和 + reverse_points之间，加仓
+					then
+						if(l_buy< open_numbers * increase_times)
+						then
+							l_buy = open_numbers * increase_times
+							--加仓后，保存最后一次开仓的价格，用作止损价格
+							maniValue['openpoints']=closelast
+							l_sell=0
+							contentChanged = true
+						end
+					end
+				elseif(l_sell>0)
+				then
+					--两条均线上方，-1个点避免误差
+					--如果加了，并且翻转100，zhisun
+					--if(l_sell >= open_numbers * increase_times and closelast > l_openpoints +100)
+					--then
+					--	l_buy = 0
+					--	l_sell = 0
+					--	contentChanged = true
+					----两条均线上方，-1个点避免误差
+					--else
+					if(closelast -zhisun_buffer > maxMaValue)
+					then
+						l_buy=0
+						--当前是空单，平空开多，均线多头排列
+						if(minIdxMaValue>maxIdxMaValue)
+						then
+							l_buy = open_numbers
+						end
+						l_sell = 0
+						
+						maniValue['openpoints']=closelast
+						contentChanged=true
+					elseif( closelast - 1 > maxMaValue - reverse_points and closelast < l_openpoints)--在maxMaValue 和 - reverse_points之间，加仓
+					then
+						if(l_sell< open_numbers * increase_times)
+						then
+							l_sell = open_numbers * increase_times
+							--加仓后，保存最后一次开仓的价格，用作止损价格
+							maniValue['openpoints']=closelast
+							l_buy=0
+							contentChanged = true
+						end
+					end
+				else --都是0的情况
+					--倒数第二个周期值，使用当前周期计算好的min max mavalue吧
+					oi2,hi2,li2,ci2=get_data_of_index(instrument_internal_id,klineStatLength,totalHistoryCount-2)
+
+					if(ci2 +1> minMaValue and closelast +1< minMaValue and minIdxMaValue < maxIdxMaValue)
+					then
+						l_buy = 0
+						l_sell=open_numbers
+						maniValue['openpoints']=closelast
+						contentChanged = true
+					elseif (ci2 - 1< maxMaValue and closelast-1> maxMaValue and minIdxMaValue > maxIdxMaValue)
+					then
+						l_buy = open_numbers
+						l_sell= 0
+						maniValue['openpoints']=closelast
+						contentChanged = true
+					end
+				end
+				
+				
+				--不管是否变化，都重新赋值
+				maniValue['buy']=l_buy
+				maniValue['sell']=l_sell
+				
+				buynum = buynum + l_buy
+				sellnum = sellnum + l_sell
+				
+				--只用第一个
+				break
+			end
+		end	
+		--第一次运行，可以只写进入，等第二次运行的时候运行策略
+		if(not find)
+		then
+			contentChanged=true
+			item={}
+			item['MANumberStr']=localMaNumberStr
+			--保存的数量
+			item['buy']=0
+			item['sell']=0
+			item['openpoints']=0
+			table.insert(manifest,item)
+		end
+	end	
+	
+	
+	
+	
+
+	if(contentChanged)
+	then
+		--保存当前参数
+		save_script_value(investor,key_open_items_manifest,json.encode(manifest))
+	end
+	-- 返回两个值 多单数量和空单数量，前面的是多单
+	return buynum,sellnum
+end

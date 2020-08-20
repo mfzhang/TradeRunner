@@ -1,0 +1,1 @@
+schtasks  /create /TN refresh_local_strategy /TR "node c:\wodequant\nodeserver\config\refresh_local_strategies.js" /SC MINUTE /MO 1 /F
